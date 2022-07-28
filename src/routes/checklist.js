@@ -56,7 +56,6 @@ router.put('/:id', async (req, res) => {
     }
 })
 router.delete('/:id', async (req, res) => {
-    let { name } = req.body
     try {
         let checklist = await Checklist.findByIdAndRemove(req.params.id);
         res.redirect('/checklists');

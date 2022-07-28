@@ -2,6 +2,7 @@ const express = require('express');
 const Checklist = require('../models/checklist');
 const Task = require('../models/task');
 const checklistDepedentRoute = express.Router();
+const simpleRouter = express.Router();
 
 checklistDepedentRoute.get('/:id/tasks/new', async (req, res) => {
     try {
@@ -26,4 +27,28 @@ checklistDepedentRoute.post('/:id/tasks/new', async (req, res) => {
     }
 })
 
-module.exports = {checklistDepedent : checklistDepedentRoute};
+simpleRouter.delete('/:id', async (req, res) => {
+    try {
+        let task = await Task.findByIdAndRemove(req.params.id);
+        let checklist = await Checklist.findById(task.checklist);
+        let taskToRemove = checklist.tasks.indexOf(task._id);
+        checklist.tasks.slice(taskToRemove,1);
+        checklist.save();
+        res.redirect(`/checklists/${checklist._id}`);
+    } catch (error) {
+        res.status(500).render('pages/error', { error: 'Erro ao excluir.' });
+    }
+})
+simpleRouter.put('/:id', async (req, res) => {
+    let task = await Task.findById(req.params.id);
+
+    try {
+        task.set(req.body.task);
+        task.save();
+        res.status(200).json({task});
+    } catch (error) {
+        let errors = error.errors
+        res.status(422).json({ task: { ...task, errors } });
+    }
+})
+module.exports = {checklistDepedent : checklistDepedentRoute, simple: simpleRouter};
